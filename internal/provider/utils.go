@@ -8,7 +8,7 @@ import (
 
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/larstobi/go-multipass/multipass"
+	"github.com/schachte/go-multipass/multipass"
 )
 
 func QueryInstance(state Instance) (*Instance, error) {

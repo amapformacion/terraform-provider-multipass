@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/larstobi/go-multipass/multipass"
+	"github.com/schachte/go-multipass/multipass"
 )
 
 var _ tfsdk.DataSourceType = instanceDataSourceType{}

@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/larstobi/go-multipass/multipass"
+	"github.com/schachte/go-multipass/multipass"
 )
 
 var _ tfsdk.ResourceType = instanceResourceType{}
@@ -81,6 +81,22 @@ func (r instanceResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.D
 					tfsdk.RequiresReplace(),
 				},
 			},
+			"mac_address": {
+				MarkdownDescription: "Custom MAC address to assign to the VM instance",
+				Type:                types.StringType,
+				Optional:            true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
+			},
+			"network_interface": {
+				MarkdownDescription: "Set custom network interface from \"multipass networks\"",
+				Type:                types.StringType,
+				Optional:            true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
+			},
 		},
 	}, nil
 }
@@ -94,12 +110,14 @@ func (t instanceResourceType) NewResource(ctx context.Context, in tfsdk.Provider
 }
 
 type Instance struct {
-	Name          types.String `tfsdk:"name"`
-	Image         types.String `tfsdk:"image"`
-	CPUS          types.Number `tfsdk:"cpus"`
-	Memory        types.String `tfsdk:"memory"`
-	Disk          types.String `tfsdk:"disk"`
-	CloudInitFile types.String `tfsdk:"cloudinit_file"`
+	Name             types.String `tfsdk:"name"`
+	Image            types.String `tfsdk:"image"`
+	CPUS             types.Number `tfsdk:"cpus"`
+	Memory           types.String `tfsdk:"memory"`
+	Disk             types.String `tfsdk:"disk"`
+	CloudInitFile    types.String `tfsdk:"cloudinit_file"`
+	NetworkInterface types.String `tfsdk:"network_interface"`
+	MacAddress       types.String `tfsdk:"mac_address"`
 }
 
 type instanceResource struct {
@@ -116,7 +134,9 @@ func (r instanceResource) Create(ctx context.Context, req tfsdk.CreateResourceRe
 	}
 
 	tflog.Info(ctx, "Multipass instanceResource", map[string]interface{}{
-		"name": plan.Name.String(),
+		"name":              plan.Name.String(),
+		"network_interface": plan.NetworkInterface.String(),
+		"mac_address":       plan.MacAddress.String(),
 	})
 
 	var cpus string
@@ -127,12 +147,14 @@ func (r instanceResource) Create(ctx context.Context, req tfsdk.CreateResourceRe
 	}
 
 	_, err := multipass.LaunchV2(&multipass.LaunchReqV2{
-		Name:          plan.Name.Value,
-		Image:         plan.Image.Value,
-		CPUS:          cpus,
-		Memory:        plan.Memory.Value,
-		Disk:          plan.Disk.Value,
-		CloudInitFile: plan.CloudInitFile.Value,
+		Name:             plan.Name.Value,
+		Image:            plan.Image.Value,
+		CPUS:             cpus,
+		Memory:           plan.Memory.Value,
+		Disk:             plan.Disk.Value,
+		CloudInitFile:    plan.CloudInitFile.Value,
+		NetworkInterface: plan.NetworkInterface.Value,
+		MacAddress:       plan.MacAddress.Value,
 	})
 
 	if err != nil {
